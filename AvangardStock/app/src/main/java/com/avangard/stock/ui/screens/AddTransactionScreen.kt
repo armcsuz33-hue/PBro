@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -19,7 +20,6 @@ import com.avangard.stock.data.model.Product
 import com.avangard.stock.data.model.TransactionType
 import com.avangard.stock.ui.theme.*
 import com.avangard.stock.ui.viewmodel.TransactionViewModel
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +34,6 @@ fun AddTransactionScreen(viewModel: TransactionViewModel = viewModel()) {
     var note by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
 
-    // Muvaffaqiyat xabari
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
             selectedProduct = null
@@ -63,66 +62,43 @@ fun AddTransactionScreen(viewModel: TransactionViewModel = viewModel()) {
             color = TextSecondary
         )
 
-
-        // Tranzaksiya turi tanlash
+        // Amal turi
         Text("Amal turi", fontWeight = FontWeight.Medium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TransactionTypeChip(
-                label = "📥 Kirdi",
-                selected = selectedType == TransactionType.INCOMING,
-                color = IncomeGreen,
-                onClick = { selectedType = TransactionType.INCOMING }
-            )
-            TransactionTypeChip(
-                label = "📤 Sotildi",
-                selected = selectedType == TransactionType.SOLD,
-                color = SoldBlue,
-                onClick = { selectedType = TransactionType.SOLD }
-            )
-            TransactionTypeChip(
-                label = "🔄 Qaytdi",
-                selected = selectedType == TransactionType.RETURNED,
-                color = ReturnOrange,
-                onClick = { selectedType = TransactionType.RETURNED }
-            )
+            TransactionTypeChip("Kirdi", selectedType == TransactionType.INCOMING, IncomeGreen) {
+                selectedType = TransactionType.INCOMING
+            }
+            TransactionTypeChip("Sotildi", selectedType == TransactionType.SOLD, SoldBlue) {
+                selectedType = TransactionType.SOLD
+            }
+            TransactionTypeChip("Qaytdi", selectedType == TransactionType.RETURNED, ReturnOrange) {
+                selectedType = TransactionType.RETURNED
+            }
         }
 
         // Mahsulot tanlash
         Text("Mahsulotni tanlang", fontWeight = FontWeight.Medium)
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
-        ) {
+        ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
             OutlinedTextField(
                 value = selectedProduct?.name ?: "",
                 onValueChange = {},
                 readOnly = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(),
+                modifier = Modifier.fillMaxWidth().menuAnchor(),
                 placeholder = { Text("Mahsulotni tanlang") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                 shape = RoundedCornerShape(12.dp)
             )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
+            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 products.forEach { product ->
                     DropdownMenuItem(
                         text = {
                             Column {
                                 Text(product.name, fontWeight = FontWeight.Medium)
-                                Text(
-                                    "Omborda: ${product.stockQuantity} dona",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary
-                                )
+                                Text("Omborda: ${product.stockQuantity} dona", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                             }
                         },
                         onClick = {
                             selectedProduct = product
-                            // Narxni avtomatik to'ldirish
                             pricePerUnit = when (selectedType) {
                                 TransactionType.INCOMING -> product.purchasePrice.toLong().toString()
                                 TransactionType.SOLD -> product.sellingPrice.toLong().toString()
@@ -134,7 +110,6 @@ fun AddTransactionScreen(viewModel: TransactionViewModel = viewModel()) {
                 }
             }
         }
-
 
         // Soni
         OutlinedTextField(
@@ -171,52 +146,41 @@ fun AddTransactionScreen(viewModel: TransactionViewModel = viewModel()) {
             maxLines = 3
         )
 
-        // Jami summa ko'rsatish
+        // Jami summa
         val qty = quantity.toIntOrNull() ?: 0
         val price = pricePerUnit.toDoubleOrNull() ?: 0.0
         val total = qty * price
         if (total > 0) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                )
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("Jami summa:", fontWeight = FontWeight.Medium)
-                    Text(
-                        "${String.format("%,.0f", total)} so'm",
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Text("${String.format("%,.0f", total)} so'm", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 }
             }
         }
 
-
-        // Saqlash tugmasi
+        // Saqlash
         Button(
             onClick = {
                 selectedProduct?.let { product ->
-                    val qty = quantity.toIntOrNull() ?: 0
-                    val price = pricePerUnit.toDoubleOrNull() ?: 0.0
-                    if (qty > 0 && price > 0) {
+                    val q = quantity.toIntOrNull() ?: 0
+                    val p = pricePerUnit.toDoubleOrNull() ?: 0.0
+                    if (q > 0 && p > 0) {
                         when (selectedType) {
-                            TransactionType.INCOMING -> viewModel.addIncomingTransaction(product.id, qty, price, note)
-                            TransactionType.SOLD -> viewModel.addSoldTransaction(product.id, qty, price, note)
-                            TransactionType.RETURNED -> viewModel.addReturnedTransaction(product.id, qty, price, note)
+                            TransactionType.INCOMING -> viewModel.addIncomingTransaction(product.id, q, p, note)
+                            TransactionType.SOLD -> viewModel.addSoldTransaction(product.id, q, p, note)
+                            TransactionType.RETURNED -> viewModel.addReturnedTransaction(product.id, q, p, note)
                         }
                     }
                 }
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
+            modifier = Modifier.fillMaxWidth().height(56.dp),
             enabled = selectedProduct != null && quantity.isNotEmpty() && pricePerUnit.isNotEmpty(),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
@@ -230,7 +194,7 @@ fun AddTransactionScreen(viewModel: TransactionViewModel = viewModel()) {
             Icon(Icons.Filled.Save, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = when (selectedType) {
+                when (selectedType) {
                     TransactionType.INCOMING -> "Skladga qo'shish"
                     TransactionType.SOLD -> "Sotuvga chiqarish"
                     TransactionType.RETURNED -> "Qaytarishni ro'yxatga olish"
@@ -239,30 +203,15 @@ fun AddTransactionScreen(viewModel: TransactionViewModel = viewModel()) {
             )
         }
 
-        // Xatolik xabari
         uiState.errorMessage?.let { error ->
-            Card(
-                colors = CardDefaults.cardColors(containerColor = AlertRed.copy(alpha = 0.1f))
-            ) {
-                Text(
-                    text = "❌ $error",
-                    modifier = Modifier.padding(12.dp),
-                    color = AlertRed
-                )
+            Card(colors = CardDefaults.cardColors(containerColor = AlertRed.copy(alpha = 0.1f))) {
+                Text(text = error, modifier = Modifier.padding(12.dp), color = AlertRed)
             }
         }
 
-        // Muvaffaqiyat
         if (uiState.isSuccess) {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = IncomeGreen.copy(alpha = 0.1f))
-            ) {
-                Text(
-                    text = "✅ Muvaffaqiyatli saqlandi!",
-                    modifier = Modifier.padding(12.dp),
-                    color = IncomeGreen,
-                    fontWeight = FontWeight.Medium
-                )
+            Card(colors = CardDefaults.cardColors(containerColor = IncomeGreen.copy(alpha = 0.1f))) {
+                Text(text = "Muvaffaqiyatli saqlandi!", modifier = Modifier.padding(12.dp), color = IncomeGreen, fontWeight = FontWeight.Medium)
             }
         }
     }
@@ -270,12 +219,7 @@ fun AddTransactionScreen(viewModel: TransactionViewModel = viewModel()) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TransactionTypeChip(
-    label: String,
-    selected: Boolean,
-    color: androidx.compose.ui.graphics.Color,
-    onClick: () -> Unit
-) {
+fun TransactionTypeChip(label: String, selected: Boolean, color: Color, onClick: () -> Unit) {
     FilterChip(
         selected = selected,
         onClick = onClick,

@@ -19,7 +19,6 @@ import com.avangard.stock.data.model.Product
 import com.avangard.stock.ui.theme.*
 import com.avangard.stock.ui.viewmodel.ProductViewModel
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminScreen(viewModel: ProductViewModel = viewModel()) {
@@ -45,28 +44,19 @@ fun AdminScreen(viewModel: ProductViewModel = viewModel()) {
             color = TextSecondary
         )
 
-        // Statistika
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = AvangardTeal.copy(alpha = 0.08f))
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Umumiy mahsulotlar", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
-                Text(
-                    "${products.size} ta",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = AvangardTeal
-                )
+                Text("${products.size} ta", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = AvangardTeal)
             }
         }
 
-        // Tugmalar
         Button(
             onClick = { showAddDialog = true },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
+            modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = AvangardTeal)
         ) {
@@ -77,43 +67,26 @@ fun AdminScreen(viewModel: ProductViewModel = viewModel()) {
 
         OutlinedButton(
             onClick = { showProductList = !showProductList },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
+            modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
             Icon(Icons.Filled.List, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                if (showProductList) "Ro'yxatni yashirish" else "Mahsulotlar ro'yxati",
-                fontWeight = FontWeight.Medium
-            )
+            Text(if (showProductList) "Ro'yxatni yashirish" else "Mahsulotlar ro'yxati")
         }
 
-
-        // Mahsulotlar ro'yxati
         if (showProductList) {
             products.forEach { product ->
-                AdminProductItem(product = product, onDeactivate = {
-                    viewModel.deactivateProduct(product.id)
-                })
+                AdminProductItem(product = product, onDeactivate = { viewModel.deactivateProduct(product.id) })
             }
         }
     }
 
-    // Yangi mahsulot qo'shish dialogi
     if (showAddDialog) {
         AddProductDialog(
             onDismiss = { showAddDialog = false },
             onAdd = { name, desc, purchasePrice, sellingPrice, quantity, category ->
-                viewModel.addProduct(
-                    name = name,
-                    description = desc,
-                    purchasePrice = purchasePrice,
-                    sellingPrice = sellingPrice,
-                    stockQuantity = quantity,
-                    category = category
-                )
+                viewModel.addProduct(name, desc, purchasePrice, sellingPrice, quantity, category)
                 showAddDialog = false
             }
         )
@@ -124,24 +97,15 @@ fun AdminScreen(viewModel: ProductViewModel = viewModel()) {
 fun AdminProductItem(product: Product, onDeactivate: () -> Unit) {
     var showConfirm by remember { mutableStateOf(false) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp)
-    ) {
+    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp)) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(product.name, fontWeight = FontWeight.Medium)
-                Text(
-                    "Omborda: ${product.stockQuantity} • ${product.category}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
-                )
+                Text("Omborda: ${product.stockQuantity} | ${product.category}", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
             }
             if (!showConfirm) {
                 IconButton(onClick = { showConfirm = true }) {
@@ -149,13 +113,8 @@ fun AdminProductItem(product: Product, onDeactivate: () -> Unit) {
                 }
             } else {
                 Row {
-                    TextButton(onClick = { showConfirm = false }) {
-                        Text("Bekor", color = TextSecondary)
-                    }
-                    TextButton(onClick = {
-                        onDeactivate()
-                        showConfirm = false
-                    }) {
+                    TextButton(onClick = { showConfirm = false }) { Text("Bekor", color = TextSecondary) }
+                    TextButton(onClick = { onDeactivate(); showConfirm = false }) {
                         Text("O'chirish", color = AlertRed, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -164,13 +123,9 @@ fun AdminProductItem(product: Product, onDeactivate: () -> Unit) {
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddProductDialog(
-    onDismiss: () -> Unit,
-    onAdd: (String, String, Double, Double, Int, String) -> Unit
-) {
+fun AddProductDialog(onDismiss: () -> Unit, onAdd: (String, String, Double, Double, Int, String) -> Unit) {
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var purchasePrice by remember { mutableStateOf("") }
@@ -180,65 +135,15 @@ fun AddProductDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text("Yangi mahsulot", fontWeight = FontWeight.Bold)
-        },
+        title = { Text("Yangi mahsulot", fontWeight = FontWeight.Bold) },
         text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.verticalScroll(rememberScrollState())
-            ) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Nomi *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Tavsif") },
-                    modifier = Modifier.fillMaxWidth(),
-                    maxLines = 2,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                OutlinedTextField(
-                    value = purchasePrice,
-                    onValueChange = { purchasePrice = it.filter { c -> c.isDigit() || c == '.' } },
-                    label = { Text("Sotib olish narxi (so'm) *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                OutlinedTextField(
-                    value = sellingPrice,
-                    onValueChange = { sellingPrice = it.filter { c -> c.isDigit() || c == '.' } },
-                    label = { Text("Sotish narxi (so'm) *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                OutlinedTextField(
-                    value = quantity,
-                    onValueChange = { quantity = it.filter { c -> c.isDigit() } },
-                    label = { Text("Boshlang'ich soni *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                OutlinedTextField(
-                    value = category,
-                    onValueChange = { category = it },
-                    label = { Text("Kategoriya") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = RoundedCornerShape(8.dp)
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nomi *") }, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(8.dp))
+                OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Tavsif") }, modifier = Modifier.fillMaxWidth(), maxLines = 2, shape = RoundedCornerShape(8.dp))
+                OutlinedTextField(value = purchasePrice, onValueChange = { purchasePrice = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text("Sotib olish narxi (so'm) *") }, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true, shape = RoundedCornerShape(8.dp))
+                OutlinedTextField(value = sellingPrice, onValueChange = { sellingPrice = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text("Sotish narxi (so'm) *") }, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true, shape = RoundedCornerShape(8.dp))
+                OutlinedTextField(value = quantity, onValueChange = { quantity = it.filter { c -> c.isDigit() } }, label = { Text("Boshlang'ich soni *") }, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, shape = RoundedCornerShape(8.dp))
+                OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text("Kategoriya") }, modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(8.dp))
             }
         },
         confirmButton = {
@@ -253,14 +158,8 @@ fun AddProductDialog(
                 },
                 enabled = name.isNotBlank() && purchasePrice.isNotEmpty() && sellingPrice.isNotEmpty(),
                 colors = ButtonDefaults.buttonColors(containerColor = AvangardTeal)
-            ) {
-                Text("Qo'shish")
-            }
+            ) { Text("Qo'shish") }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Bekor qilish")
-            }
-        }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Bekor qilish") } }
     )
 }
